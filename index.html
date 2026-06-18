@@ -1,0 +1,2302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Protein Police</title>
+<meta name="theme-color" content="#0E1430" />
+<style>
+  html, body, #root { height: 100%; }
+  body { margin: 0; background: #F1F3FB; }
+  #boot { height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: system-ui, sans-serif; color: #9499AE; font-weight: 700; }
+</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+</head>
+<body>
+<div id="root"><div id="boot">Loading Protein Police…</div></div>
+<script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
+const ICON_PATHS = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  minus: '<path d="M5 12h14"/>',
+  chevronRight: '<path d="m9 18 6-6-6-6"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6"/><path d="M5 21h14"/><path d="M12 2v2"/><path d="M4.2 6.2 5.6 7.6"/><path d="M19.8 6.2 18.4 7.6"/><path d="M2 13h2"/><path d="M20 13h2"/>',
+  shieldCheck: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  volume2: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+  vibrate: '<path d="m2 8 2 2-2 2 2 2-2 2"/><path d="m22 8-2 2 2 2-2 2 2 2"/><rect width="8" height="14" x="8" y="5" rx="1"/>',
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  bellOff: '<path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/>',
+  radio: '<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2a5.5 5.5 0 0 1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a5.5 5.5 0 0 1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>',
+  drumstick: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  utensils: '<path d="M3 2v7c0 1.1.9 2 2 2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Z"/>',
+  send: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>',
+  share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
+  userPlus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  alertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'
+};
+function Icon({
+  name,
+  size = 24,
+  color
+}) {
+  return React.createElement('svg', {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: color || "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    dangerouslySetInnerHTML: {
+      __html: ICON_PATHS[name] || ""
+    }
+  });
+}
+const mk = n => p => Icon({
+  ...p,
+  name: n
+});
+const Check = mk('check'),
+  Siren = mk('siren'),
+  Trophy = mk('trophy'),
+  ChevronRight = mk('chevronRight'),
+  Volume2 = mk('volume2'),
+  Vibrate = mk('vibrate'),
+  Music = mk('music'),
+  BellOff = mk('bellOff'),
+  Radio = mk('radio'),
+  Plus = mk('plus'),
+  Minus = mk('minus'),
+  Zap = mk('zap'),
+  Clock = mk('clock'),
+  Play = mk('play'),
+  Flame = mk('flame'),
+  ShieldCheck = mk('shieldCheck'),
+  Drumstick = mk('drumstick'),
+  Utensils = mk('utensils'),
+  Send = mk('send'),
+  Share = mk('share'),
+  UserPlus = mk('userPlus'),
+  Star = mk('star'),
+  AlertTriangle = mk('alertTriangle'),
+  Copy = mk('copy');
+const C = {
+  ink: "#0E1430",
+  sub: "#5A6078",
+  muted: "#9499AE",
+  paper: "#F1F3FB",
+  card: "#FFFFFF",
+  line: "#EBEEF6",
+  blue: "#2B5CF0",
+  indigo: "#5B53E8",
+  blueSoft: "#EAEEFE",
+  red: "#FB3B53",
+  redSoft: "#FFF0F2",
+  amber: "#F5A623",
+  amberSoft: "#FFF4E1",
+  gold: "#E0A100",
+  green: "#11BE73",
+  greenSoft: "#E1F7EC"
+};
+const GRAD = "linear-gradient(135deg,#2B5CF0 0%,#5B53E8 100%)";
+const STREAK = 4;
+
+// ── scoring engine ──────────────────────────────────────────────────────────
+function effortPts(g, lbm) {
+  const R = g / lbm;
+  return R <= 2.5 ? 11.3 * R : 11.3 * 2.5 + (R - 2.5) * 11.3 * 0.4;
+}
+function streakMult(s) {
+  return 1 + Math.min(0.25, 0.05 * s);
+}
+function dailyEarned(logged, goal, lbm, streak, social) {
+  if (lbm <= 0) return 0;
+  const E = effortPts(logged, lbm) * streakMult(streak);
+  const A = logged >= goal && logged > 0 ? 10 : 0;
+  return E + A + Math.min(3, social);
+}
+function bodyFatPct(s, h, w) {
+  return Math.max(5, Math.min(60, (s === "M" ? 64 : 76) - 20 * (h / w)));
+}
+function leanKg(s, wLb, h, w) {
+  return wLb * 0.4536 * (1 - bodyFatPct(s, h, w) / 100);
+}
+
+// ── rank system ─────────────────────────────────────────────────────────────
+function getRank(pts) {
+  if (pts >= 200) return {
+    title: "Chief",
+    emoji: "👮",
+    color: C.gold,
+    bg: C.amberSoft
+  };
+  if (pts >= 150) return {
+    title: "Lieutenant",
+    emoji: "🎖️",
+    color: "#7C3AED",
+    bg: "#F3F0FF"
+  };
+  if (pts >= 110) return {
+    title: "Sergeant",
+    emoji: "⭐",
+    color: C.blue,
+    bg: C.blueSoft
+  };
+  if (pts >= 70) return {
+    title: "Detective",
+    emoji: "🔍",
+    color: C.green,
+    bg: C.greenSoft
+  };
+  if (pts >= 35) return {
+    title: "Patrol Officer",
+    emoji: "🚔",
+    color: C.sub,
+    bg: C.paper
+  };
+  return {
+    title: "Rookie",
+    emoji: "🆕",
+    color: C.muted,
+    bg: C.paper
+  };
+}
+
+// ── meal templates ──────────────────────────────────────────────────────────
+const TEMPLATES = {
+  2: [["Lunch", 12], ["Dinner", 19]],
+  3: [["Breakfast", 8], ["Lunch", 13], ["Dinner", 19.5]],
+  4: [["Breakfast", 8], ["Lunch", 12.5], ["Snack", 16], ["Dinner", 20]],
+  5: [["Breakfast", 7.5], ["Snack", 10.5], ["Lunch", 13], ["Snack", 16.5], ["Dinner", 20]]
+};
+function buildMeals(goal, count) {
+  const per = Math.max(5, Math.round(goal / count / 5) * 5);
+  return TEMPLATES[count].map((m, i) => ({
+    id: i,
+    name: m[0],
+    time: m[1],
+    grams: i === count - 1 ? Math.max(5, goal - per * (count - 1)) : per,
+    logged: null
+  }));
+}
+const TIME_STEP = 5 / 60;
+function fmtTime(t) {
+  const h = Math.floor(t),
+    m = Math.round((t - h) * 60);
+  const ap = h >= 12 ? "PM" : "AM",
+    hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2, "0")} ${ap}`;
+}
+function timeToStr(t) {
+  const h = Math.floor(t),
+    m = Math.round((t - h) * 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function strToTime(s) {
+  if (!s || !s.includes(":")) return null;
+  const [h, m] = s.split(":").map(Number);
+  if (Number.isNaN(h)) return null;
+  return h + (m || 0) / 60;
+}
+const NOW = 15.5;
+
+// ── confetti ─────────────────────────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#2B5CF0', '#5B53E8', '#11BE73', '#FFD66E', '#FB3B53', '#F5A623'];
+  for (let i = 0; i < 70; i++) {
+    const el = document.createElement('div');
+    const size = 6 + Math.random() * 8;
+    el.style.cssText = `position:fixed;width:${size}px;height:${size}px;background:${colors[i % colors.length]};
+      left:${10 + Math.random() * 80}%;top:-14px;border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      animation:ppConfetti ${1.8 + Math.random() * 1.8}s ease-in forwards;
+      animation-delay:${Math.random() * 0.6}s;z-index:9999;pointer-events:none;
+      transform:rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4500);
+  }
+}
+
+// ── audio ───────────────────────────────────────────────────────────────────
+function playSiren() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator(),
+      gain = ctx.createGain();
+    osc.type = "sine";
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const t = ctx.currentTime;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.15, t + 0.05);
+    let time = t;
+    for (let i = 0; i < 4; i++) {
+      osc.frequency.setValueAtTime(660, time);
+      osc.frequency.linearRampToValueAtTime(1040, time + 0.28);
+      osc.frequency.linearRampToValueAtTime(660, time + 0.56);
+      time += 0.56;
+    }
+    gain.gain.exponentialRampToValueAtTime(0.0001, time);
+    osc.start(t);
+    osc.stop(time + 0.05);
+    osc.onended = () => ctx.close();
+  } catch (e) {}
+}
+function useCountUp(target, dur = 600) {
+  const [val, setVal] = useState(target);
+  const from = useRef(target);
+  useEffect(() => {
+    const start = from.current,
+      t0 = performance.now();
+    let raf;
+    const tick = t => {
+      const p = Math.min(1, (t - t0) / dur);
+      setVal(start + (target - start) * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);else from.current = target;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return val;
+}
+
+// ── standings ────────────────────────────────────────────────────────────────
+function getStandings(earnedRounded) {
+  const base = 84;
+  const friends = [{
+    name: "Omar K",
+    pts: 138,
+    color: "#7C3AED"
+  }, {
+    name: "Sara M",
+    pts: 99,
+    color: "#0EA5E9"
+  }, {
+    name: "Mike R",
+    pts: 80,
+    color: "#F59E0B"
+  }, {
+    name: "Lena P",
+    pts: 61,
+    color: "#EC4899"
+  }];
+  const youTotal = base + earnedRounded;
+  const all = [...friends, {
+    name: "You",
+    pts: youTotal,
+    you: true
+  }].sort((a, b) => b.pts - a.pts);
+  const youRank = all.findIndex(p => p.you) + 1;
+  const passed = friends.filter(f => f.pts >= base && f.pts < youTotal).map(f => f.name);
+  const above = friends.filter(f => f.pts > youTotal).sort((a, b) => a.pts - b.pts)[0];
+  const below = friends.filter(f => f.pts < youTotal).sort((a, b) => b.pts - a.pts)[0];
+  const events = [];
+  passed.forEach(n => events.push({
+    icon: "up",
+    color: C.green,
+    bg: C.greenSoft,
+    text: `You collared ${n}!`
+  }));
+  if (above) {
+    const d = above.pts - youTotal;
+    events.push(d > 25 ? {
+      icon: "flame",
+      color: C.red,
+      bg: C.redSoft,
+      text: `${above.name} has you on the run — ${d} pts ahead`
+    } : {
+      icon: "zap",
+      color: C.blue,
+      bg: C.blueSoft,
+      text: `${above.name} is ${d} pts ahead — close in`
+    });
+  }
+  if (below) {
+    const d = youTotal - below.pts;
+    if (d <= 12) events.push({
+      icon: "siren",
+      color: C.amber,
+      bg: C.amberSoft,
+      text: `${below.name} is tailing you — only ${d} back`
+    });
+  }
+  return {
+    all,
+    youRank,
+    youTotal,
+    above,
+    events
+  };
+}
+
+// ── shared UI atoms ──────────────────────────────────────────────────────────
+function Badge({
+  size = 30
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 48 48",
+    "aria-hidden": true
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "bg",
+    x1: "0",
+    y1: "0",
+    x2: "1",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0",
+    stopColor: "#2B5CF0"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "1",
+    stopColor: "#5B53E8"
+  }))), /*#__PURE__*/React.createElement("path", {
+    d: "M24 3 L41 9 V25 C41 35 33 42 24 45 C15 42 7 35 7 25 V9 Z",
+    fill: "url(#bg)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "19.5",
+    cy: "13",
+    r: "2",
+    fill: C.red
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "28.5",
+    cy: "13",
+    r: "2",
+    fill: "#AFC4FF"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M24 19 L26.4 25 L32.8 25.3 L27.7 29.2 L29.4 35.3 L24 31.8 L18.6 35.3 L20.3 29.2 L15.2 25.3 L21.6 25 Z",
+    fill: "#FFD66E"
+  }));
+}
+function SirenDots() {
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "inline-flex",
+      gap: 5
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 7,
+      height: 7,
+      borderRadius: 999,
+      background: C.red,
+      animation: "ppA .9s infinite"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 7,
+      height: 7,
+      borderRadius: 999,
+      background: "#8FB0FF",
+      animation: "ppB .9s infinite"
+    }
+  }));
+}
+function Wordmark() {
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12.5,
+      fontWeight: 800,
+      letterSpacing: 2,
+      color: "#fff"
+    }
+  }, "PROTEIN", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#FFD66E"
+    }
+  }, "POLICE"));
+}
+function Pill({
+  children,
+  bg,
+  fg
+}) {
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: bg,
+      color: fg,
+      fontSize: 11,
+      fontWeight: 700,
+      padding: "4px 11px",
+      borderRadius: 999,
+      whiteSpace: "nowrap"
+    }
+  }, children);
+}
+function Slider({
+  value,
+  min,
+  max,
+  step,
+  onChange,
+  accent
+}) {
+  return /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: min,
+    max: max,
+    step: step,
+    value: value,
+    onChange: e => onChange(Number(e.target.value)),
+    style: {
+      width: "100%",
+      accentColor: accent,
+      cursor: "pointer"
+    }
+  });
+}
+function Eyebrow({
+  children
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1.6,
+      textTransform: "uppercase",
+      color: C.muted
+    }
+  }, children);
+}
+function Avatar({
+  name,
+  color,
+  you,
+  size = 40
+}) {
+  const ini = name.split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase();
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: size,
+      height: size,
+      borderRadius: size * 0.33,
+      flexShrink: 0,
+      background: you ? GRAD : color,
+      color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 800,
+      fontSize: size * 0.33
+    }
+  }, ini);
+}
+
+// ── toast system ─────────────────────────────────────────────────────────────
+function Toast({
+  msg,
+  onDone
+}) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2400);
+    return () => clearTimeout(t);
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      bottom: 100,
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: C.ink,
+      color: "#fff",
+      padding: "11px 20px",
+      borderRadius: 999,
+      fontSize: 13,
+      fontWeight: 700,
+      zIndex: 9000,
+      animation: "ppPop .25s ease",
+      whiteSpace: "nowrap",
+      boxShadow: "0 8px 24px rgba(14,20,48,.35)"
+    }
+  }, msg);
+}
+
+// ── share helper ─────────────────────────────────────────────────────────────
+function shareRecruit(toast) {
+  const msg = `🚨 PROTEIN POLICE — You've been flagged for possible protein deficiency.\n\nReport to HQ immediately. Your fellow officers are watching the leaderboard.\n\nOpen the app and book yourself in before you end up on the Most Wanted list. 👮‍♂️\n\n[share this link with the app to join]`;
+  if (navigator.share) {
+    navigator.share({
+      title: "Protein Police",
+      text: msg
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(msg).then(() => toast("📋 Recruitment notice copied — send it!")).catch(() => toast("Copy the URL and share it!"));
+  }
+}
+
+// ===========================================================================
+// SPLASH SCREEN
+// ===========================================================================
+function Splash({
+  onContinue
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "linear-gradient(160deg,#0E1430 0%,#1B2550 100%)",
+      padding: "36px 28px 32px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 16,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "ppBadgePop .6s ease"
+    }
+  }, /*#__PURE__*/React.createElement(Badge, {
+    size: 72
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 3,
+      color: "#8FB0FF",
+      textTransform: "uppercase"
+    }
+  }, "Internal Affairs Division"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26,
+      fontWeight: 800,
+      color: "#fff",
+      letterSpacing: -0.5,
+      marginTop: 4
+    }
+  }, "Protein Police HQ")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(251,59,83,0.15)",
+      border: "1px solid rgba(251,59,83,0.4)",
+      borderRadius: 16,
+      padding: "14px 18px",
+      maxWidth: 300
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1.5,
+      color: C.red,
+      textTransform: "uppercase",
+      marginBottom: 6
+    }
+  }, "\u26A0 Notice of Deficiency"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "#CBD3F0",
+      lineHeight: 1.55,
+      fontWeight: 600
+    }
+  }, "You have been flagged for ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#fff"
+    }
+  }, "suspected protein under-consumption"), ". You are hereby ordered to report to HQ, log your meals, and answer to your precinct."))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "24px 22px 8px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    }
+  }, [{
+    emoji: "🏆",
+    title: "Compete with your crew",
+    body: "Weekly leaderboard resets Monday. Earn ranks — Rookie to Chief — based on how consistently you hit your quota."
+  }, {
+    emoji: "🔔",
+    title: "Miss a meal, face the siren",
+    body: "Set time windows for each meal. Blow past them and your phone alerts you — or your friends notice on the feed."
+  }, {
+    emoji: "📢",
+    title: "The Mess Hall",
+    body: "Post your meals publicly. Each post earns +1 power point (max 3/day). Social shame is a surprisingly good protein supplement."
+  }].map(f => /*#__PURE__*/React.createElement("div", {
+    key: f.title,
+    style: {
+      display: "flex",
+      gap: 14,
+      background: C.card,
+      border: `1px solid ${C.line}`,
+      borderRadius: 18,
+      padding: "14px 16px",
+      boxShadow: "0 2px 10px rgba(14,20,48,.04)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26,
+      flexShrink: 0,
+      marginTop: 2
+    }
+  }, f.emoji), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 800,
+      color: C.ink,
+      marginBottom: 3
+    }
+  }, f.title), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.sub,
+      lineHeight: 1.5
+    }
+  }, f.body))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "20px 22px 32px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onContinue,
+    style: {
+      ...btnGrad,
+      marginTop: 0
+    }
+  }, "Report for duty ", /*#__PURE__*/React.createElement(ChevronRight, {
+    size: 18
+  })), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: C.muted,
+      textAlign: "center",
+      marginTop: 12,
+      lineHeight: 1.6
+    }
+  }, "Free. No account needed. Invite your friends after booking.")));
+}
+
+// ===========================================================================
+// APP ROOT
+// ===========================================================================
+const INITIAL_POSTS = [{
+  id: 101,
+  name: "Omar K",
+  color: "#7C3AED",
+  meal: "Lunch",
+  text: "Double chicken & rice bowl 🍗 ~60g protein. No bail needed.",
+  reacts: 7,
+  reacted: false,
+  ago: "3h ago"
+}, {
+  id: 102,
+  name: "Sara M",
+  color: "#0EA5E9",
+  meal: "Breakfast",
+  text: "Greek yogurt + whey + berries, clocked in at 40g. Staying off the wanted list.",
+  reacts: 4,
+  reacted: false,
+  ago: "5h ago"
+}, {
+  id: 103,
+  name: "Mike R",
+  color: "#F59E0B",
+  meal: "Dinner",
+  text: "Grilled salmon & 3 eggs. Case closed for the night 🔒",
+  reacts: 5,
+  reacted: false,
+  ago: "1h ago"
+}, {
+  id: 104,
+  name: "Lena P",
+  color: "#EC4899",
+  meal: "Snack",
+  text: "Casein shake before bed 💤 Rookie move? Maybe. But still +1.",
+  reacts: 2,
+  reacted: false,
+  ago: "45m ago"
+}];
+function App() {
+  const [screen, setScreen] = useState("splash");
+  const [step, setStep] = useState(0);
+  const [tab, setTab] = useState("today");
+  const [sex, setSex] = useState("M");
+  const [weight, setWeight] = useState(196);
+  const [height, setHeight] = useState(70);
+  const [waist, setWaist] = useState(33);
+  const [goal, setGoal] = useState(140);
+  const [mealCount, setMealCount] = useState(3);
+  const [meals, setMeals] = useState(() => buildMeals(140, 3));
+  const [adjusting, setAdjusting] = useState(null);
+  const [vibe, setVibe] = useState("Siren");
+  const [buzzer, setBuzzer] = useState(90);
+  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [toast, setToast] = useState(null);
+  const prevAllClear = useRef(false);
+  const lbm = leanKg(sex, weight, height, waist);
+  const loRange = Math.round(1.6 * lbm / 5) * 5;
+  const hiRange = Math.round(2.2 * lbm / 5) * 5;
+  useEffect(() => {
+    setMeals(buildMeals(goal, mealCount));
+  }, [goal, mealCount]);
+  const plannedTotal = meals.reduce((s, m) => s + m.grams, 0);
+  const loggedTotal = meals.reduce((s, m) => s + (m.logged ?? 0), 0);
+  const myPosts = posts.filter(p => p.you).length;
+  const social = Math.min(3, myPosts);
+  const earned = dailyEarned(loggedTotal, goal, lbm, STREAK, social);
+  const earnedRounded = Math.round(earned);
+  const allClear = loggedTotal >= goal;
+  useEffect(() => {
+    if (allClear && !prevAllClear.current) {
+      launchConfetti();
+      showToast("🎉 Case closed! Quota met!");
+    }
+    prevAllClear.current = allClear;
+  }, [allClear]);
+  const showToast = msg => {
+    setToast(null);
+    setTimeout(() => setToast(msg), 10);
+  };
+  const toggleMeal = id => {
+    setMeals(ms => ms.map(m => {
+      if (m.id !== id) return m;
+      const next = {
+        ...m,
+        logged: m.logged == null ? m.grams : null
+      };
+      if (next.logged != null) showToast(`✅ ${m.name} filed — ${m.grams}g logged`);
+      return next;
+    }));
+  };
+  const setMealLogged = (id, v) => setMeals(ms => ms.map(m => m.id === id ? {
+    ...m,
+    logged: Math.max(0, v)
+  } : m));
+  const nudgeTime = (id, d) => setMeals(ms => ms.map(m => m.id === id ? {
+    ...m,
+    time: Math.max(5, Math.min(23, +(m.time + d).toFixed(3)))
+  } : m));
+  const setTimeExact = (id, str) => {
+    const t = strToTime(str);
+    if (t == null) return;
+    setMeals(ms => ms.map(m => m.id === id ? {
+      ...m,
+      time: t
+    } : m));
+  };
+  const setGrams = (id, d) => setMeals(ms => ms.map(m => m.id === id ? {
+    ...m,
+    grams: Math.max(5, m.grams + d)
+  } : m));
+  const addPost = (text, meal) => {
+    setPosts(ps => [{
+      id: Date.now(),
+      name: "You",
+      you: true,
+      meal,
+      text,
+      reacts: 0,
+      reacted: false,
+      ago: "just now"
+    }, ...ps]);
+    showToast("📢 Evidence filed in the Mess Hall");
+  };
+  const react = id => setPosts(ps => ps.map(p => p.id === id ? {
+    ...p,
+    reacted: !p.reacted,
+    reacts: p.reacts + (p.reacted ? -1 : 1)
+  } : p));
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100%",
+      background: C.paper,
+      padding: "24px 12px",
+      display: "flex",
+      justifyContent: "center",
+      fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif"
+    }
+  }, /*#__PURE__*/React.createElement("style", null, STYLE), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 392,
+      background: C.card,
+      borderRadius: 36,
+      overflow: "hidden",
+      boxShadow: "0 30px 70px rgba(14,20,48,0.20)",
+      display: "flex",
+      flexDirection: "column",
+      height: 812
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 38,
+      background: "linear-gradient(120deg,#0E1430,#26306A)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "0 16px",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Badge, {
+    size: 22
+  }), /*#__PURE__*/React.createElement(Wordmark, null)), /*#__PURE__*/React.createElement(SirenDots, null)), screen === "splash" && /*#__PURE__*/React.createElement(Splash, {
+    onContinue: () => setScreen("onboard")
+  }), screen === "onboard" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      padding: "20px 24px 4px"
+    }
+  }, [0, 1, 2].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      flex: 1,
+      height: 5,
+      borderRadius: 999,
+      background: i <= step ? GRAD : C.line
+    }
+  }))), step === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 24px 30px"
+    }
+  }, /*#__PURE__*/React.createElement(Eyebrow, null, "Step 1 of 3 \xB7 Booking"), /*#__PURE__*/React.createElement("h1", {
+    style: hTitle
+  }, "Report for booking"), /*#__PURE__*/React.createElement("p", {
+    style: hSub
+  }, "We need your stats to size up your lean mass \u2014 so the leaderboard stays fair across different bodies. No sandbagging allowed."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 24
+    }
+  }, ["M", "F"].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => setSex(s),
+    style: chip(sex === s)
+  }, s === "M" ? "Male" : "Female"))), [["Weight", weight, "lb", 120, 300, 1, setWeight], ["Height", height, "in", 58, 80, 1, setHeight], ["Waist", waist, "in", 24, 50, 1, setWaist]].map(([l, v, u, mn, mx, st, set]) => /*#__PURE__*/React.createElement("div", {
+    key: l,
+    style: {
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: rowBetween
+  }, /*#__PURE__*/React.createElement("span", {
+    style: lblS
+  }, l), /*#__PURE__*/React.createElement("span", {
+    style: lblV
+  }, v, " ", u)), /*#__PURE__*/React.createElement(Slider, {
+    value: v,
+    min: mn,
+    max: mx,
+    step: st,
+    onChange: set,
+    accent: C.blue
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 14,
+      background: C.blueSoft,
+      borderRadius: 18,
+      padding: 18,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 0.5,
+      color: C.blue,
+      textTransform: "uppercase"
+    }
+  }, "Lean mass on file"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.sub,
+      marginTop: 3
+    }
+  }, "~", Math.round(bodyFatPct(sex, height, waist)), "% body fat estimated")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 28,
+      fontWeight: 800,
+      color: C.blue,
+      letterSpacing: -0.5
+    }
+  }, Math.round(lbm * 2.2046), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14
+    }
+  }, " lb"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setStep(1),
+    style: btnGrad
+  }, "Next \u2014 set your quota ", /*#__PURE__*/React.createElement(ChevronRight, {
+    size: 18
+  }))), step === 1 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 24px 30px"
+    }
+  }, /*#__PURE__*/React.createElement(Eyebrow, null, "Step 2 of 3 \xB7 The quota"), /*#__PURE__*/React.createElement("h1", {
+    style: hTitle
+  }, "Your daily quota"), /*#__PURE__*/React.createElement("p", {
+    style: hSub
+  }, "This is your non-negotiable. Locked Monday\u2192Sunday \u2014 no changing it mid-week to game the board. Revisit at the Monday reset."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 56,
+      fontWeight: 800,
+      color: C.ink,
+      letterSpacing: -1.5
+    }
+  }, goal), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 800,
+      color: C.muted
+    }
+  }, " g")), /*#__PURE__*/React.createElement(Slider, {
+    value: goal,
+    min: 50,
+    max: 280,
+    step: 5,
+    onChange: setGoal,
+    accent: C.blue
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "center",
+      margin: "12px 0 14px"
+    }
+  }, goal >= loRange && goal <= hiRange ? /*#__PURE__*/React.createElement(Pill, {
+    bg: C.greenSoft,
+    fg: C.green
+  }, "Sweet spot \xB7 ", loRange, "\u2013", hiRange, "g") : goal < loRange ? /*#__PURE__*/React.createElement(Pill, {
+    bg: C.blueSoft,
+    fg: C.blue
+  }, "Easing in \xB7 sweet spot ", loRange, "\u2013", hiRange, "g") : /*#__PURE__*/React.createElement(Pill, {
+    bg: C.amberSoft,
+    fg: "#A77A00"
+  }, "Above quota \xB7 sweet spot ", loRange, "\u2013", hiRange, "g")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.greenSoft,
+      borderRadius: 14,
+      padding: "10px 14px",
+      marginBottom: 22,
+      display: "flex",
+      gap: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement(ShieldCheck, {
+    size: 16,
+    color: C.green
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "#0B7D4C",
+      fontWeight: 600,
+      lineHeight: 1.4
+    }
+  }, "Points scale to your lean mass \u2014 a 140lb rookie and a 220lb veteran can both compete fairly. Hit your own quota for a ", /*#__PURE__*/React.createElement("b", null, "+10 Case Closed"), " bonus.")), /*#__PURE__*/React.createElement("div", {
+    style: lblS
+  }, "Split across"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      margin: "8px 0 18px"
+    }
+  }, [2, 3, 4, 5].map(n => /*#__PURE__*/React.createElement("button", {
+    key: n,
+    onClick: () => setMealCount(n),
+    style: chip(mealCount === n)
+  }, n, " meals"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...lblS,
+      marginBottom: 10
+    }
+  }, "Adjust each meal's time window and grams:"), meals.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    style: card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      fontWeight: 800,
+      color: C.ink
+    }
+  }, m.name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: C.muted,
+      fontWeight: 700
+    }
+  }, m.grams, "g")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: ctrl
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => nudgeTime(m.id, -TIME_STEP),
+    style: stepSm
+  }, /*#__PURE__*/React.createElement(Minus, {
+    size: 13
+  })), /*#__PURE__*/React.createElement("label", {
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement(Clock, {
+    size: 13,
+    color: C.blue
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "time",
+    value: timeToStr(m.time),
+    onChange: e => setTimeExact(m.id, e.target.value),
+    style: {
+      width: 78
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: () => nudgeTime(m.id, TIME_STEP),
+    style: stepSm
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 13
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...ctrl,
+      flex: "0 0 118px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGrams(m.id, -5),
+    style: stepSm
+  }, /*#__PURE__*/React.createElement(Minus, {
+    size: 13
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      textAlign: "center",
+      fontSize: 13,
+      fontWeight: 800,
+      color: C.ink
+    }
+  }, m.grams, "g"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGrams(m.id, 5),
+    style: stepSm
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 13
+  })))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement(Pill, {
+    bg: plannedTotal === goal ? C.greenSoft : "#EEF0F7",
+    fg: plannedTotal === goal ? C.green : C.sub
+  }, "Planned ", plannedTotal, "g \xB7 quota ", goal, "g", plannedTotal === goal ? " ✓" : "")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setStep(2),
+    style: btnGrad
+  }, "Next \u2014 pick your siren ", /*#__PURE__*/React.createElement(ChevronRight, {
+    size: 18
+  }))), step === 2 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 24px 30px"
+    }
+  }, /*#__PURE__*/React.createElement(Eyebrow, null, "Step 3 of 3 \xB7 Alert protocol"), /*#__PURE__*/React.createElement("h1", {
+    style: hTitle
+  }, "Set your siren"), /*#__PURE__*/React.createElement("p", {
+    style: hSub
+  }, "Miss a meal window and your phone sounds the alarm. This is not optional. Choose your alert style."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      marginBottom: 14
+    }
+  }, [["Siren", Siren, "Wee-ooo, wee-ooo"], ["Loud", Volume2, "Full alarm blast"], ["Buzz", Vibrate, "Vibrate only"], ["Funky", Music, "A little jingle"], ["Dispatcher", Radio, "'Suspect skipped lunch'"], ["Silent", BellOff, "Badge only — covert"]].map(([name, Ic, desc]) => /*#__PURE__*/React.createElement("button", {
+    key: name,
+    onClick: () => setVibe(name),
+    style: {
+      textAlign: "left",
+      padding: 15,
+      borderRadius: 18,
+      cursor: "pointer",
+      border: `1.5px solid ${vibe === name ? C.blue : C.line}`,
+      background: vibe === name ? C.blueSoft : "#fff"
+    }
+  }, /*#__PURE__*/React.createElement(Ic, {
+    size: 20,
+    color: vibe === name ? C.blue : C.sub
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 800,
+      color: C.ink,
+      marginTop: 8
+    }
+  }, name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.muted,
+      marginTop: 2
+    }
+  }, desc)))), /*#__PURE__*/React.createElement("button", {
+    onClick: playSiren,
+    style: {
+      width: "100%",
+      padding: "12px 0",
+      borderRadius: 14,
+      cursor: "pointer",
+      marginBottom: 20,
+      border: `1.5px solid ${C.red}`,
+      background: C.redSoft,
+      color: C.red,
+      fontSize: 13,
+      fontWeight: 800,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement(Play, {
+    size: 15
+  }), " Test the siren (turn up volume)"), /*#__PURE__*/React.createElement("div", {
+    style: rowBetween
+  }, /*#__PURE__*/React.createElement("span", {
+    style: lblS
+  }, "Trigger if meal is late by"), /*#__PURE__*/React.createElement("span", {
+    style: lblV
+  }, buzzer < 60 ? `${buzzer} min` : `${(buzzer / 60).toFixed(buzzer % 60 ? 1 : 0)} hr`)), /*#__PURE__*/React.createElement(Slider, {
+    value: buzzer,
+    min: 30,
+    max: 180,
+    step: 15,
+    onChange: setBuzzer,
+    accent: C.blue
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setScreen("app");
+      setTab("today");
+    },
+    style: btnInk
+  }, "Begin patrol ", /*#__PURE__*/React.createElement(Siren, {
+    size: 17
+  })))), screen === "app" && tab === "today" && /*#__PURE__*/React.createElement(Today, {
+    meals,
+    goal,
+    lbm,
+    loggedTotal,
+    earned,
+    earnedRounded,
+    social,
+    vibe,
+    buzzer,
+    allClear,
+    setTab,
+    toggleMeal,
+    setMealLogged,
+    adjusting,
+    setAdjusting,
+    showToast
+  }), screen === "app" && tab === "feed" && /*#__PURE__*/React.createElement(Feed, {
+    posts,
+    meals,
+    addPost,
+    react,
+    social
+  }), screen === "app" && tab === "board" && /*#__PURE__*/React.createElement(Precinct, {
+    earnedRounded: earnedRounded,
+    showToast: showToast
+  }), screen === "app" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      borderTop: `1px solid ${C.line}`,
+      background: "#fff",
+      flexShrink: 0
+    }
+  }, [["today", Siren, "Patrol"], ["feed", Utensils, "Mess Hall"], ["board", Trophy, "Precinct"]].map(([id, Ic, label]) => /*#__PURE__*/React.createElement("button", {
+    key: id,
+    onClick: () => setTab(id),
+    style: {
+      flex: 1,
+      padding: "12px 0 16px",
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement(Ic, {
+    size: 21,
+    color: tab === id ? C.blue : C.muted
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      color: tab === id ? C.blue : C.muted
+    }
+  }, label))))), toast && /*#__PURE__*/React.createElement(Toast, {
+    msg: toast,
+    onDone: () => setToast(null)
+  }));
+}
+
+// ===========================================================================
+// TODAY (PATROL)
+// ===========================================================================
+function Today({
+  meals,
+  goal,
+  lbm,
+  loggedTotal,
+  earned,
+  earnedRounded,
+  social,
+  vibe,
+  buzzer,
+  allClear,
+  setTab,
+  toggleMeal,
+  setMealLogged,
+  adjusting,
+  setAdjusting,
+  showToast
+}) {
+  const shown = useCountUp(earned);
+  const pct = Math.min(1, loggedTotal / goal);
+  const R = 78,
+    circ = 2 * Math.PI * R;
+  const s = getStandings(earnedRounded);
+  const passed = s.events.find(e => e.icon === "up");
+  const headline = passed ? passed.text : s.above ? `${s.above.name} is ${s.above.pts - s.youTotal} pts ahead` : "You're the Chief 👮";
+  const E = Math.round(effortPts(loggedTotal, lbm) * streakMult(STREAK));
+  const potential = Math.round(effortPts(goal, lbm) * streakMult(STREAK) + 10 + 3);
+  const remaining = Math.max(0, goal - loggedTotal);
+  const wantedCount = meals.filter(m => m.logged == null && m.time + buzzer / 60 < NOW).length;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "22px 22px 24px"
+    }
+  }, /*#__PURE__*/React.createElement(Eyebrow, null, "Active Duty \xB7 Week 3 \xB7 ", STREAK, "-day clean record \uD83D\uDD25"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      ...hTitle,
+      marginBottom: 16
+    }
+  }, allClear ? "Case closed, officer 🎉" : wantedCount > 0 ? `${wantedCount} meal${wantedCount > 1 ? "s" : ""} AWOL 🚨` : "Currently on patrol"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "relative",
+      width: 196,
+      height: 196,
+      margin: "0 auto 6px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "196",
+    height: "196",
+    style: {
+      transform: "rotate(-90deg)"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "ring",
+    x1: "0",
+    y1: "0",
+    x2: "1",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0",
+    stopColor: "#2B5CF0"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "1",
+    stopColor: "#5B53E8"
+  }))), /*#__PURE__*/React.createElement("circle", {
+    cx: "98",
+    cy: "98",
+    r: R,
+    fill: "none",
+    stroke: C.line,
+    strokeWidth: "13"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "98",
+    cy: "98",
+    r: R,
+    fill: "none",
+    stroke: allClear ? C.green : "url(#ring)",
+    strokeWidth: "13",
+    strokeLinecap: "round",
+    strokeDasharray: circ,
+    strokeDashoffset: circ * (1 - pct),
+    style: {
+      transition: "stroke-dashoffset .6s ease, stroke .3s"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1,
+      color: C.muted,
+      textTransform: "uppercase"
+    }
+  }, "Power pts"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 54,
+      fontWeight: 800,
+      color: C.ink,
+      lineHeight: 1,
+      letterSpacing: -2
+    }
+  }, Math.round(shown)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.sub,
+      marginTop: 3
+    }
+  }, allClear ? "quota cleared ✓" : `${remaining}g left to clear`))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "center",
+      gap: 7,
+      marginBottom: 16,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement(Pill, {
+    bg: C.blueSoft,
+    fg: C.blue
+  }, "Effort ", E), /*#__PURE__*/React.createElement(Pill, {
+    bg: "#EEF0F7",
+    fg: C.sub
+  }, "Streak \xD7", streakMult(STREAK).toFixed(2)), allClear && /*#__PURE__*/React.createElement(Pill, {
+    bg: C.greenSoft,
+    fg: C.green
+  }, "+10 case closed"), social > 0 && /*#__PURE__*/React.createElement(Pill, {
+    bg: C.amberSoft,
+    fg: "#A77A00"
+  }, "+", social, " mess hall"), /*#__PURE__*/React.createElement(Pill, {
+    bg: "#EEF0F7",
+    fg: C.sub
+  }, "up to ", potential, " today")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setTab("board"),
+    style: {
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 16,
+      padding: "13px 15px",
+      borderRadius: 18,
+      cursor: "pointer",
+      border: `1px solid ${C.line}`,
+      background: "#fff",
+      boxShadow: "0 2px 10px rgba(14,20,48,0.04)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 44,
+      height: 44,
+      borderRadius: 13,
+      background: GRAD,
+      color: "#fff",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      fontWeight: 800,
+      opacity: 0.7
+    }
+  }, "RANK"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      fontWeight: 800,
+      lineHeight: 1
+    }
+  }, "#", s.youRank)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      textAlign: "left"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 0.5,
+      color: C.muted,
+      textTransform: "uppercase"
+    }
+  }, "Precinct \xB7 this week"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 800,
+      color: C.ink,
+      marginTop: 2
+    }
+  }, headline)), /*#__PURE__*/React.createElement(ChevronRight, {
+    size: 18,
+    color: C.muted
+  })), meals.map((m, idx) => {
+    const logged = m.logged != null;
+    const wanted = !logged && m.time + buzzer / 60 < NOW;
+    const isAdj = adjusting === m.id;
+    const evidenceNum = String(1000 + idx).slice(1);
+    if (logged) return /*#__PURE__*/React.createElement("button", {
+      key: m.id,
+      onClick: () => toggleMeal(m.id),
+      style: {
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 14px",
+        borderRadius: 14,
+        marginBottom: 8,
+        cursor: "pointer",
+        border: "none",
+        background: C.greenSoft
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 26,
+        height: 26,
+        borderRadius: 8,
+        background: C.green,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }
+    }, /*#__PURE__*/React.createElement(Check, {
+      size: 16,
+      color: "#fff"
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        textAlign: "left",
+        fontSize: 14,
+        fontWeight: 800,
+        color: "#0B7D4C"
+      }
+    }, m.name), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "#0B7D4C",
+        fontWeight: 700,
+        opacity: 0.7
+      }
+    }, "Ev.#", evidenceNum), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 800,
+        color: "#0B7D4C"
+      }
+    }, m.logged, "g"));
+    return /*#__PURE__*/React.createElement("div", {
+      key: m.id,
+      style: {
+        border: `1px solid ${wanted ? "#FFD2D8" : C.line}`,
+        background: wanted ? C.redSoft : "#fff",
+        borderRadius: 20,
+        padding: 15,
+        marginBottom: 11,
+        boxShadow: wanted ? "none" : "0 2px 10px rgba(14,20,48,0.04)"
+      }
+    }, wanted && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 11
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        background: "#fff",
+        border: "1px solid #FFD2D8",
+        borderRadius: 999,
+        padding: "3px 9px"
+      }
+    }, /*#__PURE__*/React.createElement(Siren, {
+      size: 12,
+      color: C.red
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontWeight: 800,
+        letterSpacing: 1,
+        color: C.red
+      }
+    }, "WANTED")), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: C.red
+      }
+    }, "AWOL \xB7 ", vibe, " active")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 13
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => toggleMeal(m.id),
+      style: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        flexShrink: 0,
+        cursor: "pointer",
+        border: `2px solid ${wanted ? C.red : C.line}`,
+        background: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        animation: wanted ? "ppPulse 1.4s infinite" : "none"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 800,
+        color: wanted ? C.red : C.muted
+      }
+    }, m.grams, "g")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 800,
+        color: C.ink
+      }
+    }, m.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: wanted ? C.red : C.sub,
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 3
+      }
+    }, wanted ? /*#__PURE__*/React.createElement(Siren, {
+      size: 12
+    }) : /*#__PURE__*/React.createElement(Clock, {
+      size: 12
+    }), wanted ? "Skipped — officers are watching" : `Due ${fmtTime(m.time)}`)), wanted ? /*#__PURE__*/React.createElement("button", {
+      onClick: playSiren,
+      style: iconBtn(C.red)
+    }, /*#__PURE__*/React.createElement(Play, {
+      size: 16
+    })) : /*#__PURE__*/React.createElement("button", {
+      onClick: () => setAdjusting(isAdj ? null : m.id),
+      style: iconBtn(C.muted)
+    }, /*#__PURE__*/React.createElement(Drumstick, {
+      size: 17
+    }))), isAdj && !wanted && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 13,
+        paddingTop: 13,
+        borderTop: `1px solid ${C.line}`
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: C.sub,
+        flex: 1
+      }
+    }, "Ate a different amount? Adjust grams:"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setMealLogged(m.id, (m.logged ?? m.grams) - 5),
+      style: stepBtn
+    }, /*#__PURE__*/React.createElement(Minus, {
+      size: 16
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16,
+        fontWeight: 800,
+        color: C.ink,
+        width: 46,
+        textAlign: "center"
+      }
+    }, m.logged ?? m.grams, "g"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setMealLogged(m.id, (m.logged ?? m.grams) + 5),
+      style: stepBtn
+    }, /*#__PURE__*/React.createElement(Plus, {
+      size: 16
+    }))));
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: C.muted,
+      textAlign: "center",
+      marginTop: 8,
+      lineHeight: 1.6
+    }
+  }, "Tap a logged meal to un-file it. Tap the gram badge to mark as eaten."));
+}
+
+// ===========================================================================
+// FEED (MESS HALL)
+// ===========================================================================
+function Feed({
+  posts,
+  meals,
+  addPost,
+  react,
+  social
+}) {
+  const [draft, setDraft] = useState("");
+  const [mealTag, setMealTag] = useState(meals[0]?.name || "Lunch");
+  const mealNames = [...new Set(meals.map(m => m.name))];
+  const post = () => {
+    if (!draft.trim()) return;
+    addPost(draft.trim(), mealTag);
+    setDraft("");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "22px 20px 24px"
+    }
+  }, /*#__PURE__*/React.createElement(Eyebrow, null, "File your evidence \xB7 earn power"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      ...hTitle,
+      marginBottom: 5
+    }
+  }, "The Mess Hall"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: C.sub,
+      marginBottom: 16,
+      lineHeight: 1.5
+    }
+  }, "Post your meals publicly. Your precinct is watching. Each post earns +1 power point (max 3/day) \u2014 because social accountability is basically protein."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: `1px solid ${C.line}`,
+      borderRadius: 20,
+      padding: 14,
+      marginBottom: 18,
+      boxShadow: "0 2px 10px rgba(14,20,48,0.04)"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    value: draft,
+    onChange: e => setDraft(e.target.value),
+    onKeyDown: e => e.key === "Enter" && post(),
+    placeholder: "What did you catch yourself eating?",
+    style: {
+      width: "100%",
+      border: "none",
+      outline: "none",
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.ink,
+      background: "transparent",
+      marginBottom: 12
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap",
+      marginBottom: 12
+    }
+  }, mealNames.map(n => /*#__PURE__*/React.createElement("button", {
+    key: n,
+    onClick: () => setMealTag(n),
+    style: {
+      padding: "5px 12px",
+      borderRadius: 999,
+      fontSize: 12,
+      fontWeight: 800,
+      cursor: "pointer",
+      border: `1.5px solid ${mealTag === n ? C.blue : C.line}`,
+      background: mealTag === n ? C.blueSoft : "#fff",
+      color: mealTag === n ? C.blue : C.sub
+    }
+  }, n))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.muted,
+      fontWeight: 600
+    }
+  }, "+1 power pt \xB7 max 3/day", social >= 3 ? " (maxed 🔒)" : ""), /*#__PURE__*/React.createElement("button", {
+    onClick: post,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "9px 16px",
+      borderRadius: 13,
+      border: "none",
+      cursor: "pointer",
+      background: draft.trim() && social < 3 ? GRAD : C.line,
+      color: draft.trim() && social < 3 ? "#fff" : C.muted,
+      fontSize: 13,
+      fontWeight: 800
+    }
+  }, /*#__PURE__*/React.createElement(Send, {
+    size: 14
+  }), " File report"))), posts.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    style: {
+      background: "#fff",
+      border: `1px solid ${C.line}`,
+      borderRadius: 18,
+      padding: 14,
+      marginBottom: 10,
+      boxShadow: "0 2px 8px rgba(14,20,48,0.03)",
+      animation: p.you && Date.now() - p.id < 2000 ? "ppPop .35s ease" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 9
+    }
+  }, /*#__PURE__*/React.createElement(Avatar, {
+    name: p.name,
+    color: p.color,
+    you: p.you,
+    size: 36
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 800,
+      color: C.ink
+    }
+  }, p.name, p.you && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.blue,
+      fontWeight: 700,
+      marginLeft: 6
+    }
+  }, "\xB7 you")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.muted,
+      fontWeight: 600
+    }
+  }, p.ago, " \xB7 clocked in")), /*#__PURE__*/React.createElement(Pill, {
+    bg: C.blueSoft,
+    fg: C.blue
+  }, p.meal)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      color: C.ink,
+      fontWeight: 600,
+      lineHeight: 1.45,
+      marginBottom: 11
+    }
+  }, p.text), /*#__PURE__*/React.createElement("button", {
+    onClick: () => react(p.id),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "6px 12px",
+      borderRadius: 999,
+      border: `1px solid ${p.reacted ? "#FFD2D8" : C.line}`,
+      background: p.reacted ? C.redSoft : "#fff",
+      cursor: "pointer",
+      color: p.reacted ? C.red : C.sub,
+      fontSize: 12,
+      fontWeight: 800
+    }
+  }, /*#__PURE__*/React.createElement(Flame, {
+    size: 14,
+    color: p.reacted ? C.red : C.muted
+  }), " ", p.reacts))));
+}
+
+// ===========================================================================
+// PRECINCT (LEADERBOARD)
+// ===========================================================================
+function Precinct({
+  earnedRounded,
+  showToast
+}) {
+  const {
+    all,
+    events,
+    youTotal
+  } = getStandings(earnedRounded);
+  const yourRank = getRank(youTotal);
+  const [copied, setCopied] = useState(false);
+  const recruit = () => {
+    const msg = `🚨 PROTEIN POLICE — You've been flagged for possible protein deficiency.\n\nReport to HQ immediately. Your fellow officers are already on the leaderboard and watching.\n\nSign up before Monday's reset or you'll start as a Rookie with zero points. 👮‍♂️`;
+    if (navigator.share) {
+      navigator.share({
+        title: "Protein Police",
+        text: msg
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(msg).then(() => {
+        showToast("📋 APB copied — send it to a slacker");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      }).catch(() => showToast("Copy the page URL to share"));
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "22px 22px 24px"
+    }
+  }, /*#__PURE__*/React.createElement(Eyebrow, null, "Mon\u2013Sun \xB7 resets Monday 00:00"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      ...hTitle,
+      marginBottom: 4
+    }
+  }, "The Precinct"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: C.sub,
+      marginBottom: 16,
+      lineHeight: 1.5
+    }
+  }, "Weekly standings. Earn enough points and you climb the ranks \u2014 from Rookie all the way to Chief."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: `linear-gradient(135deg,${yourRank.color}18,${yourRank.color}08)`,
+      border: `1.5px solid ${yourRank.color}30`,
+      borderRadius: 20,
+      padding: "16px 18px",
+      marginBottom: 16,
+      display: "flex",
+      alignItems: "center",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 36
+    }
+  }, yourRank.emoji), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1.2,
+      color: yourRank.color,
+      textTransform: "uppercase"
+    }
+  }, "Your rank this week"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: C.ink,
+      marginTop: 2
+    }
+  }, yourRank.title), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.sub,
+      marginTop: 2
+    }
+  }, youTotal, " power pts \xB7 ", getRank(youTotal + 30).title !== yourRank.title ? `${30 - youTotal % 30} pts to ${getRank(youTotal + 30).title}` : "keep it up"))), events.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: `1px solid ${C.line}`,
+      borderRadius: 18,
+      padding: 18,
+      marginBottom: 14,
+      fontSize: 13,
+      color: C.sub,
+      textAlign: "center"
+    }
+  }, "Log your meals on patrol and watch your rank move here."), events.map((e, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      background: e.bg,
+      borderRadius: 15,
+      padding: "12px 15px",
+      marginBottom: 8,
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, e.icon === "up" && /*#__PURE__*/React.createElement(Trophy, {
+    size: 17,
+    color: e.color
+  }), e.icon === "flame" && /*#__PURE__*/React.createElement(Flame, {
+    size: 17,
+    color: e.color
+  }), e.icon === "zap" && /*#__PURE__*/React.createElement(Zap, {
+    size: 17,
+    color: e.color
+  }), e.icon === "siren" && /*#__PURE__*/React.createElement(Siren, {
+    size: 17,
+    color: e.color
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 800,
+      color: e.color
+    }
+  }, e.text))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: `1px solid ${C.line}`,
+      borderRadius: 18,
+      padding: "14px 16px",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1.2,
+      color: C.muted,
+      textTransform: "uppercase",
+      marginBottom: 12
+    }
+  }, "Rank ladder"), [{
+    pts: "200+",
+    r: getRank(200)
+  }, {
+    pts: "150+",
+    r: getRank(150)
+  }, {
+    pts: "110+",
+    r: getRank(110)
+  }, {
+    pts: "70+",
+    r: getRank(70)
+  }, {
+    pts: "35+",
+    r: getRank(35)
+  }, {
+    pts: "0+",
+    r: getRank(0)
+  }].map(({
+    pts,
+    r
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: r.title,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 8,
+      opacity: youTotal >= parseInt(pts) || pts === "0+" ? 1 : 0.45
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, r.emoji), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 800,
+      color: r.color,
+      flex: 1
+    }
+  }, r.title), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: C.muted,
+      fontWeight: 600
+    }
+  }, pts, " pts")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1.2,
+      color: C.muted,
+      textTransform: "uppercase",
+      marginBottom: 10
+    }
+  }, "This week's standings"), all.map((p, i) => {
+    const r = getRank(p.pts);
+    return /*#__PURE__*/React.createElement("div", {
+      key: p.name,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: 13,
+        borderRadius: 18,
+        marginBottom: 8,
+        background: i === 0 ? C.amberSoft : "#fff",
+        border: p.you ? `1.5px solid ${C.blue}` : `1px solid ${C.line}`,
+        boxShadow: "0 2px 10px rgba(14,20,48,0.03)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 15,
+        fontWeight: 800,
+        color: i === 0 ? C.gold : C.muted,
+        width: 20,
+        textAlign: "center"
+      }
+    }, i + 1), /*#__PURE__*/React.createElement(Avatar, {
+      name: p.name,
+      color: p.color,
+      you: p.you
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 800,
+        color: C.ink,
+        display: "flex",
+        alignItems: "center",
+        gap: 6
+      }
+    }, p.name, i === 0 && /*#__PURE__*/React.createElement(ShieldCheck, {
+      size: 15,
+      color: C.gold
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: r.color,
+        fontWeight: 700,
+        marginTop: 1
+      }
+    }, r.emoji, " ", r.title, p.you ? " · that's you" : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        fontWeight: 800,
+        color: C.ink
+      }
+    }, p.pts));
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: recruit,
+    style: {
+      width: "100%",
+      marginTop: 8,
+      padding: "14px 0",
+      borderRadius: 18,
+      border: `1.5px solid ${C.blue}`,
+      background: C.blueSoft,
+      color: C.blue,
+      fontSize: 14,
+      fontWeight: 800,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(UserPlus, {
+    size: 17
+  }), " ", copied ? "APB sent 📋" : "Send an APB — recruit someone"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: C.muted,
+      textAlign: "center",
+      marginTop: 8,
+      lineHeight: 1.6
+    }
+  }, "Copy this page's URL and send it to a friend. They open it, book themselves in, and join the precinct Monday."));
+}
+
+// ── style constants ───────────────────────────────────────────────────────────
+const STYLE = `
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@keyframes ppA{0%,45%{opacity:1}50%,100%{opacity:.18}}
+@keyframes ppB{0%,45%{opacity:.18}50%,100%{opacity:1}}
+@keyframes ppPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,59,83,.45)}50%{box-shadow:0 0 0 7px rgba(251,59,83,0)}}
+@keyframes ppPop{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes ppBadgePop{0%{transform:scale(.5) rotate(-15deg);opacity:0}70%{transform:scale(1.1) rotate(3deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes ppConfetti{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+input[type=time]{font-family:inherit;font-weight:800;color:#0E1430;border:none;background:transparent;font-size:14px;outline:none}
+input[type=text]{font-family:inherit}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+`;
+const hTitle = {
+  fontSize: 27,
+  fontWeight: 800,
+  color: C.ink,
+  margin: "6px 0 5px",
+  letterSpacing: -0.8
+};
+const hSub = {
+  fontSize: 13,
+  color: C.sub,
+  margin: "0 0 20px",
+  lineHeight: 1.55
+};
+const rowBetween = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginBottom: 7
+};
+const lblS = {
+  fontSize: 13,
+  color: C.sub,
+  fontWeight: 700
+};
+const lblV = {
+  fontSize: 14,
+  color: C.ink,
+  fontWeight: 800
+};
+const card = {
+  background: "#fff",
+  border: `1px solid ${C.line}`,
+  borderRadius: 18,
+  padding: 14,
+  marginBottom: 9,
+  boxShadow: "0 2px 8px rgba(14,20,48,0.03)"
+};
+const ctrl = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  background: "#FAFBFE",
+  border: `1px solid ${C.line}`,
+  borderRadius: 13,
+  padding: "5px 6px"
+};
+function chip(a) {
+  return {
+    flex: 1,
+    padding: "13px 0",
+    borderRadius: 15,
+    fontWeight: 800,
+    fontSize: 14,
+    cursor: "pointer",
+    border: a ? "none" : `1.5px solid ${C.line}`,
+    background: a ? C.ink : "#fff",
+    color: a ? "#fff" : C.sub
+  };
+}
+const btnGrad = {
+  width: "100%",
+  marginTop: 26,
+  padding: "16px 0",
+  borderRadius: 18,
+  border: "none",
+  background: GRAD,
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: 800,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  boxShadow: "0 10px 24px rgba(43,92,240,0.32)"
+};
+const btnInk = {
+  ...btnGrad,
+  background: C.ink,
+  boxShadow: "0 10px 24px rgba(14,20,48,0.28)"
+};
+function iconBtn(color) {
+  return {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color
+  };
+}
+const stepBtn = {
+  width: 34,
+  height: 34,
+  borderRadius: 11,
+  border: `1px solid ${C.line}`,
+  background: "#fff",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: C.ink
+};
+const stepSm = {
+  width: 28,
+  height: 28,
+  borderRadius: 9,
+  border: `1px solid ${C.line}`,
+  background: "#fff",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: C.ink,
+  flexShrink: 0
+};
+ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+</body>
+</html>
