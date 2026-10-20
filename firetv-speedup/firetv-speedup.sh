@@ -53,9 +53,9 @@ connect() {
   state="$(adb -s "$HOST" get-state 2>/dev/null || true)"
   if [[ "$state" != "device" ]]; then
     die "could not connect to $HOST (state: ${state:-none}).
-  - Is ADB debugging on? Settings > My Fire TV > Developer options > ADB debugging
+  - Is ADB debugging on? Settings > My Fire TV (or Device & Software on Fire TV smart TVs) > Developer options > ADB debugging
   - Did you accept the 'Allow USB debugging?' prompt on the TV? Run this again after accepting.
-  - Is the IP right? Settings > My Fire TV > About > Network"
+  - Is the IP right? Settings > My Fire TV (or Device & Software on Fire TV smart TVs) > About > Network"
   fi
   echo "Connected: $(sh_tv getprop ro.product.model) ($(sh_tv getprop ro.build.version.name))"
 }
@@ -124,7 +124,7 @@ case "$COMMAND" in
     disable_bloat
     clean
     status
-    printf '\nAll done. Restart the Fire TV (Settings > My Fire TV > Restart) for the best result.\n'
+    printf '\nAll done. Restart the Fire TV (Settings > My Fire TV (or Device & Software on Fire TV smart TVs) > Restart) for the best result.\n'
     ;;
   clean)   clean; status ;;
   status)  status ;;
